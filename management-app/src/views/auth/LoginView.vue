@@ -41,7 +41,7 @@ onMounted(() => {
     toast.add({
       severity: 'success',
       summary: 'Successful Sign-up',
-      group: 'bc',
+      group: 'su',
       life: 10000,
     })
 
@@ -51,7 +51,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <Toast position="top-right" group="bc" style="width: max-content">
+  <Toast position="top-right" group="su" style="width: max-content">
     <template #message="slotProps">
       <div class="flex items-center gap-x-2 mr-2">
         <i class="pi pi-check-circle"></i>

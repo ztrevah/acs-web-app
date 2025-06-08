@@ -1,6 +1,6 @@
 import authApi from '@/api/auth'
 import { jwtDecode } from 'jwt-decode'
-import { onMounted, readonly, ref } from 'vue'
+import { readonly, ref } from 'vue'
 
 export function useAuth() {
   const currentUser = ref(null)

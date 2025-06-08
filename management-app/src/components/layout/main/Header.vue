@@ -18,7 +18,6 @@ const toggleSidebar = () => {
 const isHeaderMenuOpen = ref(false)
 const toggleMenu = () => {
   isHeaderMenuOpen.value = !isHeaderMenuOpen.value
-  console.log('toogle')
 }
 
 const { logout } = useAuth()

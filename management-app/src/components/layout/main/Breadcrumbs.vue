@@ -59,7 +59,7 @@ const isLastCrumb = (crumb, index) => {
 </script>
 
 <template>
-  <nav class="flex" aria-label="Breadcrumb">
+  <nav class="flex mb-4" aria-label="Breadcrumb">
     <ol class="inline-flex items-center space-x-2 sm:space-x-3">
       <li v-for="(crumb, index) in displayedCrumbs" :key="index" class="inline-flex items-center">
         <div class="flex items-center">
