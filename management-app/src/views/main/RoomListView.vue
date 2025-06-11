@@ -1,5 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import Dialog from 'primevue/dialog'
 import Toast from 'primevue/toast'
@@ -10,6 +11,9 @@ import MainLayout from '@/layouts/MainLayout.vue'
 import RoomsTable from '@/components/main/rooms/RoomsTable.vue'
 
 import roomsApi from '@/api/rooms'
+
+const route = useRoute()
+const router = useRouter()
 
 const crumbItems = [
   {
@@ -56,7 +60,7 @@ const addNewRoom = async () => {
       life: 3000,
     })
     closeAddRoomModal()
-    await refetchRooms()
+    await fetchRooms()
   } catch (err) {
     errorAddRoomMessage.value = err?.response?.data?.error?.message ?? 'Error'
   }
@@ -66,8 +70,12 @@ const currentRoomListings = ref([])
 const cursorList = ref([null])
 const currentPageIndex = ref(-1)
 const isFetchingRooms = ref(false)
-const searchRoomId = ref('')
-const limit = 10
+
+const roomQuery = reactive({
+  keyword: null,
+})
+
+const limit = 20
 
 const hasNextPage = computed(() => {
   return currentPageIndex.value == -1 || cursorList.value[currentPageIndex.value + 1] !== null
@@ -77,77 +85,51 @@ const hasPrevPage = computed(() => {
   return currentPageIndex.value > 0
 })
 
-const getRoomById = async () => {
-  if (searchRoomId.value.length === 0) {
-    await refetchRooms()
-    return
-  }
-
-  try {
-    isFetchingRooms.value = true
-    const response = await roomsApi.getRoomById(searchRoomId.value)
-    currentRoomListings.value = [response.data]
-  } catch (err) {
-    currentRoomListings.value = []
-  } finally {
-    isFetchingRooms.value = false
-    currentPageIndex.value = 0
-    cursorList.value = [null, null]
-  }
+const searchRooms = async () => {
+  currentRoomListings.value = []
+  cursorList.value = [null]
+  currentPageIndex.value = -1
+  await handleNextPage()
 }
 
 const handleNextPage = async () => {
   if (!hasNextPage.value) return
 
-  try {
-    isFetchingRooms.value = true
-    const params = {
-      cursorId: cursorList.value[currentPageIndex.value + 1],
-      limit,
-    }
-    const response = await roomsApi.getRooms(params)
-    const { cursorId: nextId, count, data } = response.data
-    currentRoomListings.value = data
-    cursorList.value = [...cursorList.value, nextId]
-    currentPageIndex.value += 1
-  } catch (err) {
-    // Handle fetching error
-  } finally {
-    isFetchingRooms.value = false
-  }
+  currentPageIndex.value += 1
+  await fetchRooms()
 }
 
 const handlePrevPage = async () => {
   if (!hasPrevPage.value) return
 
+  currentPageIndex.value -= 1
+  await fetchRooms()
+}
+
+const fetchRooms = async () => {
   try {
     isFetchingRooms.value = true
     const params = {
-      cursorId: cursorList[currentPageIndex.value - 1],
+      cursorId: cursorList.value[currentPageIndex.value],
       limit,
+      keyword: roomQuery.keyword ? roomQuery.keyword : null,
     }
     const response = await roomsApi.getRooms(params)
     const { cursorId: nextId, count, data } = response.data
     currentRoomListings.value = data
-    cursorList.value[currentPageIndex] = nextId
-    cursorList.value.pop()
-    currentPageIndex.value -= 1
+    cursorList.value = cursorList.value.slice(0, currentPageIndex.value + 1).concat([nextId])
   } catch (err) {
-    // Handle fetching error
+    console.log(err)
+    cursorList.value = [null]
+    currentPageIndex.value = 0
+    currentRoomListings.value = []
   } finally {
     isFetchingRooms.value = false
   }
 }
 
-const refetchRooms = async () => {
-  currentPageIndex.value = -1
-  cursorList.value = [null]
-  await handleNextPage()
-  return
-}
-
 onMounted(async () => {
-  await refetchRooms()
+  await searchRooms()
 })
 </script>
 
@@ -160,16 +142,16 @@ onMounted(async () => {
       <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <form
           class="relative flex items-center max-w-[300px] lg:w-[300px]"
-          @submit.prevent="getRoomById"
+          @submit.prevent="searchRooms"
         >
           <i
             class="pi pi-search absolute left-3 text-gray-400 hover:text-gray-700 cursor-pointer"
           ></i>
           <input
             type="text"
-            placeholder="Search by ID"
+            placeholder="Search by keyword"
             class="pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent w-full"
-            v-model="searchRoomId"
+            v-model="roomQuery.keyword"
           />
         </form>
         <button
@@ -219,7 +201,10 @@ onMounted(async () => {
                 v-model="newRoom.location"
               />
             </div>
-            <p v-if="errorAddRoomMessage.length > 0" class="text-red-500 text-xs my-1 text-center">
+            <p
+              v-if="errorAddRoomMessage.length > 0"
+              class="text-red-500 text-xs font-semibold my-1 text-center"
+            >
               {{ errorAddRoomMessage }}
             </p>
             <div class="w-full flex items-center justify-end gap-2">
@@ -248,21 +233,21 @@ onMounted(async () => {
           </template>
         </Toast>
       </div>
-      <div className="flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-4xl">
+      <div class="flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-4xl">
           <RoomsTable :is-loading="isFetchingRooms" :rooms="currentRoomListings" />
-          <div className="flex justify-between items-center mt-6">
+          <div class="flex justify-between items-center mt-6">
             <button
               @click="handlePrevPage"
               :disabled="!hasPrevPage || isFetchingRooms"
-              className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
+              class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
             >
               Previous
             </button>
             <button
               @click="handleNextPage"
               :disabled="!hasNextPage || isFetchingRooms"
-              className="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
+              class="px-6 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ease-in-out"
             >
               Next
             </button>

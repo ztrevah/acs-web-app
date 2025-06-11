@@ -30,8 +30,15 @@ const protectedRoute = [
   {
     path: '/rooms',
     name: 'rooms',
-    // Lazy load the RoomsView component
-    component: () => import('@/views/main/RoomsView.vue'),
+    component: () => import('@/views/main/RoomListView.vue'),
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/rooms/:id',
+    name: 'room_detail',
+    component: () => import('@/views/main/RoomView.vue'),
     meta: {
       requiresAuth: true,
     },
@@ -39,7 +46,6 @@ const protectedRoute = [
   {
     path: '/devices',
     name: 'devices',
-    // Lazy load the DevicesView component
     component: () => import('@/views/main/DevicesView.vue'),
     meta: {
       requiresAuth: true,
@@ -48,7 +54,6 @@ const protectedRoute = [
   {
     path: '/members',
     name: 'members',
-    // Lazy load the MembersView component
     component: () => import('@/views/main/MembersView.vue'),
     meta: {
       requiresAuth: true,

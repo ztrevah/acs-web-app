@@ -107,7 +107,7 @@ onMounted(() => {
         </p>
       </div>
 
-      <p v-if="errorMessage.length > 0" class="text-red-500 text-xs my-1 text-center">
+      <p v-if="errorMessage.length > 0" class="text-red-500 text-xs font-semibold my-1 text-center">
         {{ errorMessage }}
       </p>
       <button

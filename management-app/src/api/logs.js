@@ -5,15 +5,15 @@ const getLogs = (params) => {
 }
 
 const getLogsByRoom = (roomId, params) => {
-  return api.get(`/api/logs/rooms/${roomId}`, { params })
+  return api.get(`/api/logs/room/${roomId}`, { params })
 }
 
 const getLogsByDevice = (deviceId, params) => {
-  return api.get(`/api/logs/devices/${deviceId}`, { params })
+  return api.get(`/api/logs/device/${deviceId}`, { params })
 }
 
 const getLogsByMember = (memberId, params) => {
-  return api.get(`/api/logs/civilians/${memberId}`, { params })
+  return api.get(`/api/logs/civilian/${memberId}`, { params })
 }
 
 export default {

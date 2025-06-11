@@ -55,18 +55,17 @@ const handleLogout = async () => {
         />
         <div
           v-if="isHeaderMenuOpen"
-          className="absolute right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-10
-                       transform origin-top-right transition-all duration-200 ease-out animate-fade-in"
+          class="absolute right-0 mt-2 bg-white border border-gray-200 rounded-lg shadow-lg py-2 z-10 transform origin-top-right transition-all duration-200 ease-out animate-fade-in"
           aria-orientation="vertical"
           aria-labelledby="user-menu"
         >
-          <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-200 truncate">
-            <span className="text-gray-900">chiennq</span>
+          <div class="px-4 py-2 text-sm text-gray-700 border-b border-gray-200 truncate">
+            <span class="text-gray-900">chiennq</span>
           </div>
 
           <button
             @click="handleLogout"
-            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-b-lg focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out"
+            class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-b-lg focus:outline-none focus:bg-gray-100 transition duration-150 ease-in-out"
           >
             Logout
           </button>
