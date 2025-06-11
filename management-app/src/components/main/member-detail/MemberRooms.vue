@@ -2,16 +2,15 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
-import { Dialog, ProgressSpinner, Toast, useToast } from 'primevue'
+import { ProgressSpinner } from 'primevue'
 
-import roomsApi from '@/api/rooms'
+import membersApi from '@/api/members'
 
 const route = useRoute()
-const toast = useToast()
 
-const roomId = route.params.id
+const memberId = route.params.id
 
-const currentDeviceList = ref([])
+const currentAccessibleRoomList = ref([])
 const cursorList = ref([null])
 const currentPageIndex = ref(-1)
 const isFetching = ref(false)
@@ -34,31 +33,31 @@ const handleNextPage = async () => {
   if (!hasNextPage.value) return
 
   currentPageIndex.value += 1
-  await fetchDevices()
+  await fetchAccessibleRooms()
 }
 
 const handlePrevPage = async () => {
   if (!hasPrevPage.value) return
 
   currentPageIndex.value -= 1
-  await fetchDevices()
+  await fetchAccessibleRooms()
 }
 
-const fetchDevices = async () => {
+const fetchAccessibleRooms = async () => {
   console.log(query)
   try {
     isFetching.value = true
-    const response = await roomsApi.getRoomDevices(roomId, {
+    const response = await membersApi.getAccessibleRoomsByMember(memberId, {
       cursorId: cursorList.value[currentPageIndex.value],
       limit,
       keyword: query.keyword ? query.keyword : null,
     })
 
     const { cursorId: nextId, count, data } = response.data
-    currentDeviceList.value = data
+    currentAccessibleRoomList.value = data
     cursorList.value = cursorList.value.slice(0, currentPageIndex.value + 1).concat([nextId])
   } catch (err) {
-    currentDeviceList.value = []
+    currentAccessibleRoomList.value = []
     currentPageIndex.value = -1
     cursorList.value = [null]
     console.log(err)
@@ -67,58 +66,15 @@ const fetchDevices = async () => {
   }
 }
 
-const searchDevices = async () => {
-  currentDeviceList.value = []
+const searchAccessibleRooms = async () => {
+  currentAccessibleRoomList.value = []
   currentPageIndex.value = -1
   cursorList.value = [null]
   await handleNextPage()
 }
 
-const isAddModalOpen = ref(false)
-const addedDevice = reactive({
-  deviceId: null,
-})
-const isAddingMember = ref(false)
-const errorMessage = ref('')
-
-const onOpenAddModal = () => {
-  addedDevice.deviceId = null
-  isAddModalOpen.value = true
-}
-
-const onCloseAddModal = () => {
-  isAddModalOpen.value = false
-  errorMessage.value = ''
-}
-
-const updateAddModalVisible = (visible) => {
-  if (visible) onOpenAddModal()
-  else onCloseAddModal()
-}
-
-const addDevice = async () => {
-  if (!addedDevice.deviceId) return
-  try {
-    isAddingMember.value = true
-    const response = await roomsApi.addRoomDevices(roomId, addedDevice)
-    toast.add({
-      severity: 'success',
-      summary: 'New device added!',
-      group: 'ard',
-      life: 3000,
-    })
-    onCloseAddModal()
-    await searchDevices()
-  } catch (err) {
-    errorMessage.value = err.response?.data?.error?.message ?? 'Error'
-    console.log(err)
-  } finally {
-    isAddingMember.value = false
-  }
-}
-
 onMounted(async () => {
-  await searchDevices()
+  await searchAccessibleRooms()
 })
 </script>
 
@@ -127,7 +83,7 @@ onMounted(async () => {
     <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <form
         class="relative flex items-center max-w-[300px] lg:w-[300px]"
-        @submit.prevent="searchDevices"
+        @submit.prevent="searchAccessibleRooms"
       >
         <i
           class="pi pi-search absolute left-3 text-gray-400 hover:text-gray-700 cursor-pointer"
@@ -139,13 +95,6 @@ onMounted(async () => {
           v-model="query.keyword"
         />
       </form>
-      <button
-        class="w-max bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
-        @click="onOpenAddModal"
-      >
-        <i class="pi pi-plus" style="size: 16px"></i>
-        <span>Add</span>
-      </button>
     </div>
     <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-4xl">
       <div class="relative">
@@ -161,10 +110,10 @@ onMounted(async () => {
           />
         </div>
         <div
-          v-if="!isFetching && currentDeviceList.length === 0"
+          v-if="!isFetching && currentAccessibleRoomList.length === 0"
           class="text-center py-4 text-gray-600 text-lg"
         >
-          No devices found.
+          No rooms found.
         </div>
         <div
           v-else
@@ -180,22 +129,32 @@ onMounted(async () => {
                 </th>
                 <th
                   class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg"
-                ></th>
+                >
+                  Name
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg"
+                >
+                  Location
+                </th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <tr
-                v-for="device in currentDeviceList"
-                :key="device.id"
+                v-for="room in currentAccessibleRoomList"
+                :key="room.id"
                 class="hover:bg-gray-50 cursor-pointer"
               >
                 <td
                   class="px-6 py-4 whitespace-nowrap font-medium text-sm text-gray-900 cursor-pointer"
                 >
-                  <RouterLink :to="`/devices/${device.id}`">{{ device.id }}</RouterLink>
+                  <RouterLink :to="`/rooms/${room.id}`">{{ room.id }}</RouterLink>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <i class="pi pi-trash" style="font-size: 16px; color: red"></i>
+                  {{ room.name }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ room.location }}
                 </td>
               </tr>
             </tbody>
@@ -220,52 +179,4 @@ onMounted(async () => {
       </div>
     </div>
   </div>
-  <Dialog
-    :visible="isAddModalOpen"
-    modal
-    header="Add device"
-    class="w-full max-w-[300px]"
-    v-on:update:visible="updateAddModalVisible"
-  >
-    <template #header>
-      <div class="inline-flex items-center justify-center gap-2">
-        <span class="font-bold whitespace-nowrap text-lg">Add new device</span>
-      </div>
-    </template>
-
-    <form @submit.prevent="addDevice">
-      <div class="flex flex-col gap-2 mb-4">
-        <label for="id" class="text-md font-semibold hidden">ID</label>
-        <input
-          id="id"
-          type="text"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          required
-          autocomplete="off"
-          placeholder="Device ID"
-          v-model="addedDevice.deviceId"
-        />
-      </div>
-      <p v-if="errorMessage.length > 0" class="text-red-500 text-xs font-semibold my-1 text-center">
-        {{ errorMessage }}
-      </p>
-      <button
-        type="button"
-        class="w-full p-2 border border-transparent rounded-md text-xs font-medium text-white bg-indigo-500 hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        @click="addDevice"
-        :disabled="isAddingMember"
-      >
-        Add
-      </button>
-    </form>
-  </Dialog>
-  <Toast position="top-right" group="ard" style="width: max-content">
-    <template #message="slotProps">
-      <div class="flex items-center gap-x-2 mr-2">
-        <p class="font-medium text-sm">
-          Device {{ addedDevice.deviceId }} has been registered to the room!
-        </p>
-      </div>
-    </template>
-  </Toast>
 </template>

@@ -13,7 +13,7 @@ const addMember = (body, params) => {
 }
 
 const updateMember = (memberId, body, params) => {
-  return api.post(`/api/civilians/${memberId}`, body, { params })
+  return api.put(`/api/civilians/${memberId}`, body, { params })
 }
 
 const getAccessibleRoomsByMember = (memberId, params) => {

@@ -1,62 +1,59 @@
 <script setup>
-import { useRoute, useRouter } from 'vue-router'
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import MainLayout from '@/layouts/MainLayout.vue'
 import Breadcrumbs from '@/components/layout/main/Breadcrumbs.vue'
-import RoomDevices from '@/components/main/room-detail/RoomDevices.vue'
-import RoomLogs from '@/components/main/room-detail/RoomLogs.vue'
-import RoomMembers from '@/components/main/room-detail/RoomMembers.vue'
+import DeviceLogs from '@/components/main/device-detail/DeviceLogs.vue'
 
-import roomsApi from '@/api/rooms'
+import devicesApi from '@/api/devices'
 
 const route = useRoute()
 const router = useRouter()
 
-const roomId = computed(() => route.params.id)
+const deviceId = computed(() => route.params.id)
 const crumbItems = [
   {
-    name: 'Rooms',
-    link: '/rooms',
+    name: 'Devices',
+    link: '/devices',
   },
   {
-    name: roomId.value,
-    link: `/rooms/${roomId.value}`,
+    name: deviceId.value,
+    link: `/devices/${deviceId.value}`,
   },
 ]
 
-const roomInfo = reactive({
-  name: '',
-  location: '',
+const deviceInfo = reactive({
+  id: deviceId.value,
+  roomId: null,
 })
-const editingRoomInfo = reactive({
-  name: '',
-  location: '',
+
+const editingDeviceInfo = reactive({
+  id: deviceId.value,
+  roomId: null,
 })
 
 const getRoomInfo = async () => {
   try {
-    const response = await roomsApi.getRoomById(roomId.value)
-    roomInfo.name = response.data.name
-    roomInfo.location = response.data.location
+    const response = await devicesApi.getDeviceById(deviceId.value)
+    deviceInfo.roomId = response.data.roomId
   } catch (err) {
     console.log(err)
-    router.push({ path: '/rooms', replace: true })
+    router.push({ path: '/devices', replace: true })
   }
 }
 
 const isUpdating = ref(false)
 const isEnableUpdating = ref(false)
 
-const updateRoomInfo = async () => {
-  if (editingRoomInfo.name === roomInfo.name && editingRoomInfo.location === roomInfo.location)
-    return
+const updateDeviceInfo = async () => {
+  if (!(editingDeviceInfo.roomId && deviceInfo.roomId !== editingDeviceInfo.roomId)) return
 
   try {
     isUpdating.value = true
-    const response = await roomsApi.updateRoom(roomId.value, editingRoomInfo)
-    roomInfo.name = response.data.name
-    roomInfo.location = response.data.location
+    const response = await devicesApi.updateDevice(deviceId.value, editingDeviceInfo)
+    deviceInfo.roomId = response.data.roomId
+
     isEnableUpdating.value = false
   } catch (err) {
     console.log(err)
@@ -66,20 +63,13 @@ const updateRoomInfo = async () => {
 }
 
 const enableUpdate = () => {
-  editingRoomInfo.name = roomInfo.name
-  editingRoomInfo.location = roomInfo.location
+  editingDeviceInfo.roomId = deviceInfo.roomId
   isEnableUpdating.value = true
 }
 
 const roomNavBarItems = [
   {
     name: 'Logs',
-  },
-  {
-    name: 'Members',
-  },
-  {
-    name: 'Devices',
   },
 ]
 
@@ -102,26 +92,12 @@ onMounted(async () => {
       <div class="max-w-[200px] p-4">
         <div v-if="isEnableUpdating" class="space-y-4 w-max">
           <div>
-            <label htmlFor="roomName" class="block text-sm font-semibold text-gray-700 mb-1">
-              Name
-            </label>
+            <label htmlFor="roomId" class="block font-semibold text-gray-700 mb-1"> Room ID </label>
             <input
               type="text"
-              id="roomName"
+              id="roomId"
               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-150 ease-in-out"
-              v-model="editingRoomInfo.name"
-              :disabled="isUpdating"
-            />
-          </div>
-          <div>
-            <label htmlFor="roomLocation" class="block text-sm font-semibold text-gray-700 mb-1">
-              Location
-            </label>
-            <input
-              type="text"
-              id="roomLocation"
-              class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-150 ease-in-out"
-              v-model="editingRoomInfo.location"
+              v-model="editingDeviceInfo.roomId"
               :disabled="isUpdating"
             />
           </div>
@@ -134,7 +110,7 @@ onMounted(async () => {
               Cancel
             </button>
             <button
-              @click="updateRoomInfo"
+              @click="updateDeviceInfo"
               class="w-full sm:w-auto px-4 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
               :disabled="isUpdating"
             >
@@ -144,16 +120,15 @@ onMounted(async () => {
         </div>
         <div v-else class="space-y-4 w-max">
           <div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 items-baseline">
-            <p class="text-md font-semibold text-gray-700">Name:</p>
-            <p class="text-sm text-gray-900">{{ roomInfo.name }}</p>
-
-            <p class="text-md font-semibold text-gray-700">Location:</p>
-            <p class="text-sm text-gray-900">{{ roomInfo.location }}</p>
+            <p class="text-md font-semibold text-gray-700">Room ID:</p>
+            <RouterLink :to="`/rooms/${deviceInfo.roomId}`">
+              <p class="text-sm text-gray-900">{{ deviceInfo.roomId ?? 'N/A' }}</p>
+            </RouterLink>
           </div>
           <div class="pt-2">
             <button
               @click="enableUpdate"
-              class="w-full px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out"
+              class="w-[200px] px-6 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out"
             >
               Edit
             </button>
@@ -180,9 +155,7 @@ onMounted(async () => {
         </ul>
       </nav>
 
-      <RoomLogs v-if="currentTabIndex === 0" />
-      <RoomMembers v-if="currentTabIndex === 1" />
-      <RoomDevices v-if="currentTabIndex === 2" />
+      <DeviceLogs v-if="currentTabIndex === 0" />
     </div>
   </MainLayout>
 </template>

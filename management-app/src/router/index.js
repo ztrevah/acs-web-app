@@ -46,7 +46,15 @@ const protectedRoute = [
   {
     path: '/devices',
     name: 'devices',
-    component: () => import('@/views/main/DevicesView.vue'),
+    component: () => import('@/views/main/DeviceListView.vue'),
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/devices/:id',
+    name: 'device_detail',
+    component: () => import('@/views/main/DeviceView.vue'),
     meta: {
       requiresAuth: true,
     },
@@ -54,7 +62,31 @@ const protectedRoute = [
   {
     path: '/members',
     name: 'members',
-    component: () => import('@/views/main/MembersView.vue'),
+    component: () => import('@/views/main/MemberListView.vue'),
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/members/:id',
+    name: 'member_detail',
+    component: () => import('@/views/main/MemberView.vue'),
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/logs',
+    name: 'logs',
+    component: () => import('@/views/main/LogListView.vue'),
+    meta: {
+      requiresAuth: true,
+    },
+  },
+  {
+    path: '/logs/:id',
+    name: 'log_detail',
+    component: () => import('@/views/main/LogView.vue'),
     meta: {
       requiresAuth: true,
     },

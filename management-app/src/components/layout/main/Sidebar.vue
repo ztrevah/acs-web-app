@@ -5,6 +5,7 @@ import HomeIcon from '@/components/icons/HomeIcon.vue'
 import RoomIcon from '@/components/icons/RoomIcon.vue'
 import DeviceIcon from '@/components/icons/DeviceIcon.vue'
 import MembersIcon from '@/components/icons/MembersIcon.vue'
+import LogIcon from '@/components/icons/LogIcon.vue'
 
 const menuItems = [
   {
@@ -26,6 +27,11 @@ const menuItems = [
     name: 'Members',
     icon: MembersIcon,
     path: '/members',
+  },
+  {
+    name: 'Logs',
+    icon: LogIcon,
+    path: '/logs',
   },
 ]
 
