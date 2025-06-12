@@ -53,10 +53,12 @@ const getMemberInfo = async () => {
     memberInfo.hometown = response.data.hometown
     memberInfo.imageUrl = response.data.imageUrl
 
-    const imageResponse = await imagesApi.getImage(memberInfo.imageUrl)
-    const imageBlob = imageResponse.data
-    const objectUrl = URL.createObjectURL(imageBlob)
-    profileImageElement.src = objectUrl
+    if (memberInfo.imageUrl) {
+      const imageResponse = await imagesApi.getImage(memberInfo.imageUrl)
+      const imageBlob = imageResponse.data
+      const objectUrl = URL.createObjectURL(imageBlob)
+      profileImageElement.src = objectUrl
+    }
   } catch (err) {
     console.log(err)
     router.push({ path: '/members', replace: true })

@@ -66,7 +66,7 @@ const addNewMember = async () => {
     const response = await membersApi.addMember(formData)
     toast.add({
       severity: 'success',
-      summary: 'New room created!',
+      summary: 'New member created!',
       group: 'am',
       life: 3000,
     })
@@ -271,7 +271,7 @@ onMounted(async () => {
             </div>
           </form>
         </Dialog>
-        <Toast position="top-right" group="ar" style="width: max-content">
+        <Toast position="top-right" group="am" style="width: max-content">
           <template #message="slotProps">
             <div class="flex items-center gap-x-2 mr-2">
               <p class="font-medium text-sm">Member "{{ newMember.id }}" added to the system!</p>

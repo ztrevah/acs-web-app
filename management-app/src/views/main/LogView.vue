@@ -47,10 +47,12 @@ const getLogInfo = async () => {
     logInfo.deviceId = response.data.deviceId
     logInfo.imageUrl = response.data.imageUrl
 
-    const imageResponse = await imagesApi.getImage(logInfo.imageUrl)
-    const imageBlob = imageResponse.data
-    const objectUrl = URL.createObjectURL(imageBlob)
-    logImage.src = objectUrl
+    if (logInfo.imageUrl) {
+      const imageResponse = await imagesApi.getImage(logInfo.imageUrl)
+      const imageBlob = imageResponse.data
+      const objectUrl = URL.createObjectURL(imageBlob)
+      logImage.src = objectUrl
+    }
   } catch (err) {
     console.log(err)
     router.push({ path: '/logs', replace: true })
