@@ -74,7 +74,7 @@ onMounted(async () => {
         <div class="space-y-4 w-full">
           <div class="flex flex-col gap-2">
             <div class="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 items-baseline">
-              <p class="text-md font-semibold text-gray-700">Created at:</p>
+              <p class="text-md font-semibold text-gray-700">Access time:</p>
               <p class="text-sm text-gray-900">{{ convertUtcIsoDateTime(logInfo.createdAt) }}</p>
 
               <p class="text-md font-semibold text-gray-700">Room ID:</p>
