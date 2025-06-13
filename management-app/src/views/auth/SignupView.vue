@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import authApi from '@/api/auth'
 
 const username = ref('')
+const email = ref('')
 const password = ref('')
 const confirmPassword = ref('')
 
@@ -15,8 +16,9 @@ const errorMessage = ref('')
 
 const handleSignUp = async () => {
   if (
-    !(username.value.length > 0) ||
-    !(password.value.length > 0) ||
+    !username.value ||
+    !password.value ||
+    !email.value ||
     password.value !== confirmPassword.value
   ) {
     return
@@ -24,7 +26,11 @@ const handleSignUp = async () => {
 
   try {
     isLoading.value = true
-    const response = await authApi.signup({ username: username.value, password: password.value })
+    const response = await authApi.signup({
+      username: username.value,
+      password: password.value,
+      email: email.value,
+    })
     router.push({ path: '/auth/login', query: { ...route.query }, state: { signUpSuccess: true } })
   } catch (err) {
     console.log(err)
@@ -68,6 +74,21 @@ const handleLoginRedirect = () => {
         />
         <p v-if="username === null || username.length === 0" class="text-red-500 text-xs mt-1">
           Username is required.
+        </p>
+      </div>
+
+      <div class="mb-6">
+        <label for="email" class="block text-gray-700 text-sm font-semibold mb-2"> Email </label>
+        <input
+          type="email"
+          id="email"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 transition duration-200"
+          placeholder="Your email"
+          v-model="email"
+          aria-label="email"
+        />
+        <p v-if="email === null || email.length === 0" class="text-red-500 text-xs mt-1">
+          Email is required.
         </p>
       </div>
 

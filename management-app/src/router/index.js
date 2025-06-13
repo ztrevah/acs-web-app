@@ -91,6 +91,15 @@ const protectedRoute = [
       requiresAuth: true,
     },
   },
+  {
+    path: '/users-management',
+    name: 'users_management',
+    component: () => import('@/views/main/UserListView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresSuperAdminRole: true,
+    },
+  },
 ]
 
 const router = createRouter({
@@ -106,13 +115,21 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  const { isAuthenticated } = useAuth()
+  const { isSuperAdmin, isAuthenticated } = useAuth()
   const isLoggedIn = await isAuthenticated()
   if (to.meta.requiresAuth) {
     if (!isLoggedIn) {
       next({ path: '/auth/login', query: { redirect: to.fullPath } })
     } else {
-      next()
+      if (to.meta.requiresSuperAdminRole) {
+        if (isSuperAdmin()) {
+          next()
+        } else {
+          next({ path: '/' })
+        }
+      } else {
+        next()
+      }
     }
   } else {
     if (isLoggedIn) {

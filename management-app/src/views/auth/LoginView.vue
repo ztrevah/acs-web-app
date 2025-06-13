@@ -55,7 +55,7 @@ onMounted(() => {
     <template #message="slotProps">
       <div class="flex items-center gap-x-2 mr-2">
         <i class="pi pi-check-circle"></i>
-        <p class="font-medium">Successfully signed up!</p>
+        <p class="font-medium">Successfully signed up! Your account will be verified soon.</p>
       </div>
     </template>
   </Toast>

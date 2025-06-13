@@ -82,7 +82,6 @@ const updateMemberInfo = async () => {
     formData.append('image', editingMemberInfo.image)
 
     const response = await membersApi.updateMember(memberId.value, formData)
-    console.log(response)
     memberInfo.id = response.data.id
     memberInfo.name = response.data.name
     memberInfo.dateOfBirth = response.data.dateOfBirth
