@@ -53,10 +53,11 @@ const props = defineProps({
   },
 })
 
-onMounted(async () => {
-  const { isAuthenticated, isSuperAdmin } = useAuth()
-  await isAuthenticated()
-  hasUserOptions.value = isSuperAdmin()
+onMounted(() => {
+  const { getUserInfoFromAccessToken } = useAuth()
+  const userInfo = getUserInfoFromAccessToken()
+
+  if (userInfo) hasUserOptions.value = userInfo.role == 'SuperAdmin'
 })
 </script>
 

@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 import HamburgerMenuIcon from '@/components/icons/HamburgerMenuIcon.vue'
 import SettingIcon from '@/components/icons/SettingIcon.vue'
@@ -15,6 +15,10 @@ const toggleSidebar = () => {
   emit('toggle-sidebar')
 }
 
+const { getUserInfoFromAccessToken } = useAuth()
+const userInfo = computed(() => {
+  return getUserInfoFromAccessToken()
+})
 const isHeaderMenuOpen = ref(false)
 const toggleMenu = () => {
   isHeaderMenuOpen.value = !isHeaderMenuOpen.value
@@ -60,7 +64,7 @@ const handleLogout = async () => {
           aria-labelledby="user-menu"
         >
           <div class="px-4 py-2 text-sm text-gray-700 border-b border-gray-200 truncate">
-            <span class="text-gray-900">chiennq</span>
+            <span class="text-gray-900">{{ userInfo?.username }}</span>
           </div>
 
           <button

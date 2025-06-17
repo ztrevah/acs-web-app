@@ -35,10 +35,6 @@ export function useAuth() {
     }
   }
 
-  const isSuperAdmin = () => {
-    return currentUser.value.role === 'SuperAdmin'
-  }
-
   const login = async (credentials) => {
     const response = await authApi.login(credentials)
     const accessToken = response.data.accessToken
@@ -55,11 +51,15 @@ export function useAuth() {
     localStorage.removeItem('accessToken')
   }
 
+  const getUserInfoFromAccessToken = () => {
+    return decodeAccessToken(localStorage.getItem('accessToken'))
+  }
+
   return {
     currentUser: readonly(currentUser),
     isAuthenticated,
-    isSuperAdmin,
     login,
     logout,
+    getUserInfoFromAccessToken,
   }
 }
