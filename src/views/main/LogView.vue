@@ -48,10 +48,14 @@ const getLogInfo = async () => {
     logInfo.imageUrl = response.data.imageUrl
 
     if (logInfo.imageUrl) {
-      const imageResponse = await imagesApi.getImage(logInfo.imageUrl)
-      const imageBlob = imageResponse.data
-      const objectUrl = URL.createObjectURL(imageBlob)
-      logImage.src = objectUrl
+      try {
+        const imageResponse = await imagesApi.getImage(logInfo.imageUrl)
+        const imageBlob = imageResponse.data
+        const objectUrl = URL.createObjectURL(imageBlob)
+        logImage.src = objectUrl
+      } catch (err) {
+        logImage.alt = 'Log image not available.'
+      }
     }
   } catch (err) {
     console.log(err)
