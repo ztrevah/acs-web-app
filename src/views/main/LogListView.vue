@@ -7,6 +7,7 @@ import MainLayout from '@/layouts/MainLayout.vue'
 
 import logsApi from '@/api/logs'
 import { convertUtcIsoDateTime } from '@/utils/datetimeutils'
+import { ProgressSpinner } from 'primevue'
 
 const route = useRoute()
 const router = useRouter()

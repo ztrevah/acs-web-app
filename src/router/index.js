@@ -115,14 +115,15 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  const { isSuperAdmin, isAuthenticated } = useAuth()
+  const { getUserInfoFromAccessToken, isAuthenticated } = useAuth()
   const isLoggedIn = await isAuthenticated()
   if (to.meta.requiresAuth) {
     if (!isLoggedIn) {
       next({ path: '/auth/login', query: { redirect: to.fullPath } })
     } else {
       if (to.meta.requiresSuperAdminRole) {
-        if (isSuperAdmin()) {
+        const userInfo = getUserInfoFromAccessToken()
+        if (userInfo && userInfo.role === 'SuperAdmin') {
           next()
         } else {
           next({ path: '/' })
