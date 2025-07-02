@@ -4,15 +4,6 @@ import HomeView from '@/views/main/HomeView.vue'
 import LoginView from '@/views/auth/LoginView.vue'
 import SignupView from '@/views/auth/SignupView.vue'
 import { useAuth } from '@/composables/useAuth'
-import RoomListView from '@/views/main/RoomListView.vue'
-import RoomView from '@/views/main/RoomView.vue'
-import DeviceListView from '@/views/main/DeviceListView.vue'
-import DeviceView from '@/views/main/DeviceView.vue'
-import MemberListView from '@/views/main/MemberListView.vue'
-import MemberView from '@/views/main/MemberView.vue'
-import LogListView from '@/views/main/LogListView.vue'
-import LogView from '@/views/main/LogView.vue'
-import UserListView from '@/views/main/UserListView.vue'
 
 const publicRoutes = [
   {
@@ -39,7 +30,7 @@ const protectedRoute = [
   {
     path: '/rooms',
     name: 'rooms',
-    component: RoomListView,
+    component: () => import('@/views/main/RoomListView.vue'),
     meta: {
       requiresAuth: true,
     },
@@ -47,7 +38,7 @@ const protectedRoute = [
   {
     path: '/rooms/:id',
     name: 'room_detail',
-    component: RoomView,
+    component: () => import('@/views/main/RoomView.vue'),
     meta: {
       requiresAuth: true,
     },
@@ -55,7 +46,7 @@ const protectedRoute = [
   {
     path: '/devices',
     name: 'devices',
-    component: DeviceListView,
+    component: () => import('@/views/main/DeviceListView.vue'),
     meta: {
       requiresAuth: true,
     },
@@ -63,7 +54,7 @@ const protectedRoute = [
   {
     path: '/devices/:id',
     name: 'device_detail',
-    component: DeviceView,
+    component: () => import('@/views/main/DeviceView.vue'),
     meta: {
       requiresAuth: true,
     },
@@ -71,7 +62,7 @@ const protectedRoute = [
   {
     path: '/members',
     name: 'members',
-    component: MemberListView,
+    component: () => import('@/views/main/MemberListView.vue'),
     meta: {
       requiresAuth: true,
     },
@@ -79,7 +70,7 @@ const protectedRoute = [
   {
     path: '/members/:id',
     name: 'member_detail',
-    component: MemberView,
+    component: () => import('@/views/main/MemberView.vue'),
     meta: {
       requiresAuth: true,
     },
@@ -87,7 +78,7 @@ const protectedRoute = [
   {
     path: '/logs',
     name: 'logs',
-    component: LogListView,
+    component: () => import('@/views/main/LogListView.vue'),
     meta: {
       requiresAuth: true,
     },
@@ -95,7 +86,7 @@ const protectedRoute = [
   {
     path: '/logs/:id',
     name: 'log_detail',
-    component: LogView,
+    component: () => import('@/views/main/LogView.vue'),
     meta: {
       requiresAuth: true,
     },
@@ -103,7 +94,7 @@ const protectedRoute = [
   {
     path: '/users-management',
     name: 'users_management',
-    component: UserListView,
+    component: () => import('@/views/main/UserListView.vue'),
     meta: {
       requiresAuth: true,
       requiresSuperAdminRole: true,
