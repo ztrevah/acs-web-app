@@ -5,7 +5,7 @@ import { useRoute } from 'vue-router'
 import { ProgressSpinner } from 'primevue'
 
 import logsApi from '@/api/logs'
-import { convertUtcIsoDateTime } from '@/utils/datetimeutils'
+import { convertUtcIsoDateTimeToLocal } from '@/utils/datetimeutils'
 
 const route = useRoute()
 const memberId = route.params.id
@@ -165,7 +165,7 @@ onMounted(async () => {
                   class="px-6 py-4 whitespace-nowrap font-medium text-sm text-gray-900 cursor-pointer"
                 >
                   <RouterLink :to="`/logs/${log.id}`">{{
-                    convertUtcIsoDateTime(log.createdAt)
+                    convertUtcIsoDateTimeToLocal(log.createdAt)
                   }}</RouterLink>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

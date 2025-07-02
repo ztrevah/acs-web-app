@@ -6,7 +6,7 @@ import Breadcrumbs from '@/components/layout/main/Breadcrumbs.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 
 import logsApi from '@/api/logs'
-import { convertUtcIsoDateTime } from '@/utils/datetimeutils'
+import { convertUtcIsoDateTimeToLocal } from '@/utils/datetimeutils'
 import { ProgressSpinner } from 'primevue'
 
 const route = useRoute()
@@ -188,7 +188,7 @@ onMounted(async () => {
                       class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 hover:text-indigo-600 cursor-pointer"
                     >
                       <RouterLink :to="`/logs/${log.id}`">{{
-                        convertUtcIsoDateTime(log.createdAt)
+                        convertUtcIsoDateTimeToLocal(log.createdAt)
                       }}</RouterLink>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
