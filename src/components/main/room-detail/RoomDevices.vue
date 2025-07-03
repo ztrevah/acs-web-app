@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
-import { Dialog, ProgressSpinner, Toast, useToast } from 'primevue'
+import { Dialog, ProgressSpinner, Select, Toast, useToast } from 'primevue'
 
 import roomsApi from '@/api/rooms'
 
@@ -18,7 +18,10 @@ const isFetching = ref(false)
 
 const query = reactive({
   keyword: null,
+  direction: null,
 })
+
+const directions = ['Entry', 'Exit']
 
 const limit = 20
 
@@ -45,13 +48,13 @@ const handlePrevPage = async () => {
 }
 
 const fetchDevices = async () => {
-  console.log(query)
   try {
     isFetching.value = true
     const response = await roomsApi.getRoomDevices(roomId, {
       cursorId: cursorList.value[currentPageIndex.value],
       limit,
       keyword: query.keyword ? query.keyword : null,
+      isIn: query.direction === 'Entry' ? true : query.direction === null ? null : false,
     })
 
     const { cursorId: nextId, count, data } = response.data
@@ -72,6 +75,10 @@ const searchDevices = async () => {
   currentPageIndex.value = -1
   cursorList.value = [null]
   await handleNextPage()
+}
+
+const onChangeQueryDirection = async () => {
+  await searchDevices()
 }
 
 const isAddModalOpen = ref(false)
@@ -124,21 +131,34 @@ onMounted(async () => {
 
 <template>
   <div class="flex flex-col items-center justify-center p-4">
-    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <form
-        class="relative flex items-center max-w-[300px] lg:w-[300px]"
-        @submit.prevent="searchDevices"
-      >
-        <i
-          class="pi pi-search absolute left-3 text-gray-400 hover:text-gray-700 cursor-pointer"
-        ></i>
-        <input
-          type="text"
-          placeholder="Search by keyword"
-          class="pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent w-full"
-          v-model="query.keyword"
+    <div class="w-full flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
+      <div class="flex flex-col gap-3">
+        <form
+          class="relative flex items-center max-w-[300px] lg:w-[300px]"
+          @submit.prevent="searchDevices"
+        >
+          <i
+            class="pi pi-search absolute left-3 text-gray-400 hover:text-gray-700 cursor-pointer"
+          ></i>
+          <input
+            type="text"
+            placeholder="Search by keyword"
+            class="pl-10 pr-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent w-full"
+            v-model="query.keyword"
+          />
+        </form>
+        <Select
+          id="direction"
+          v-model="query.direction"
+          :options="directions"
+          placeholder="Entry/Exit"
+          :disabled="isFetching"
+          class="mx-2"
+          showClear
+          @change="onChangeQueryDirection"
         />
-      </form>
+      </div>
+
       <button
         class="w-max bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
         @click="onOpenAddModal"
@@ -180,6 +200,11 @@ onMounted(async () => {
                 </th>
                 <th
                   class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg"
+                >
+                  Direction
+                </th>
+                <th
+                  class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider rounded-tl-lg"
                 ></th>
               </tr>
             </thead>
@@ -193,6 +218,11 @@ onMounted(async () => {
                   class="px-6 py-4 whitespace-nowrap font-medium text-sm text-gray-900 cursor-pointer"
                 >
                   <RouterLink :to="`/devices/${device.id}`">{{ device.id }}</RouterLink>
+                </td>
+                <td
+                  :class="`px-6 py-4 whitespace-nowrap text-sm font-medium ${device.in ? 'text-green-600' : 'text-red-600'}`"
+                >
+                  {{ device.in ? 'Entry' : 'Exit' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <i class="pi pi-trash" style="font-size: 16px; color: red"></i>

@@ -75,6 +75,7 @@ const isFetching = ref(false)
 
 const query = reactive({
   keyword: null,
+  direction: null,
 })
 
 const limit = 20
@@ -115,6 +116,7 @@ const fetchDevices = async () => {
       cursorId: cursorList.value[currentPageIndex.value],
       limit,
       keyword: query.keyword ? query.keyword : null,
+      isIn: query.direction === 'Entry' ? true : query.direction === null ? null : false,
     }
     const response = await devicesApi.getDevices(params)
     const { cursorId: nextId, count, data } = response.data
@@ -141,7 +143,7 @@ onMounted(async () => {
       <div class="mb-4">
         <Breadcrumbs :crumbs="crumbItems" />
       </div>
-      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:gap-4">
         <form
           class="relative flex items-center max-w-[300px] lg:w-[300px]"
           @submit.prevent="searchDevices"
@@ -156,8 +158,20 @@ onMounted(async () => {
             v-model="query.keyword"
           />
         </form>
+
+        <Select
+          id="direction"
+          v-model="query.direction"
+          :options="directions"
+          placeholder="Entry/Exit"
+          :disabled="isFetching"
+          class="w-[150px] mx-2"
+          showClear
+          @change="searchDevices"
+        />
+
         <button
-          class="w-max bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
+          class="w-max ml-auto bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out flex items-center space-x-2 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
           @click="openAddDeviceModal"
         >
           <i class="pi pi-plus" style="size: 16px"></i>

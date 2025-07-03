@@ -119,6 +119,7 @@ onMounted(async () => {
           :options="directions"
           placeholder="Entry/Exit"
           class="w-full"
+          showClear
         />
       </div>
       <div class="flex items-center w-max gap-x-2">
