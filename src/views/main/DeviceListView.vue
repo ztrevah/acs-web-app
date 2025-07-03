@@ -10,7 +10,7 @@ import Breadcrumbs from '@/components/layout/main/Breadcrumbs.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 
 import devicesApi from '@/api/devices'
-import { ProgressSpinner } from 'primevue'
+import { ProgressSpinner, Select } from 'primevue'
 
 const route = useRoute()
 const router = useRouter()
@@ -43,12 +43,18 @@ const updateAddModalVisible = (visible) => {
 
 const newDevice = reactive({
   id: '',
+  direction: null,
 })
 
+const directions = ['Entry', 'Exit']
+
 const addNewDevice = async () => {
-  if (newDevice.name.length === 0 || newDevice.location.length === 0) return
+  if (!newDevice.name || !newDevice.direction) return
   try {
-    const response = await devicesApi.addDevice(newDevice)
+    const response = await devicesApi.addDevice({
+      id: newDevice.id,
+      in: newDevice.direction === 'Entry',
+    })
     toast.add({
       severity: 'success',
       summary: 'New room created!',
@@ -185,6 +191,15 @@ onMounted(async () => {
                 placeholder="Device ID"
                 v-model="newDevice.id"
               />
+
+              <label for="in" class="text-md font-semibold">Direction:</label>
+              <Select
+                id="in"
+                v-model="newDevice.direction"
+                :options="directions"
+                placeholder="Entry/Exit"
+                class="w-full"
+              />
             </div>
             <p
               v-if="errorAddDeviceMessage.length > 0"
@@ -255,6 +270,11 @@ onMounted(async () => {
                     >
                       Room ID
                     </th>
+                    <th
+                      class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Direction
+                    </th>
                   </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -266,6 +286,11 @@ onMounted(async () => {
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                       {{ device.roomId }}
+                    </td>
+                    <td
+                      :class="`px-6 py-4 whitespace-nowrap text-sm font-medium ${device.in ? 'text-green-600' : 'text-red-600'}`"
+                    >
+                      {{ device.in ? 'Entry' : 'Exit' }}
                     </td>
                   </tr>
                 </tbody>

@@ -7,6 +7,7 @@ import Breadcrumbs from '@/components/layout/main/Breadcrumbs.vue'
 import DeviceLogs from '@/components/main/device-detail/DeviceLogs.vue'
 
 import devicesApi from '@/api/devices'
+import { Select } from 'primevue'
 
 const route = useRoute()
 const router = useRouter()
@@ -23,20 +24,26 @@ const crumbItems = [
   },
 ]
 
+const directions = ['Entry', 'Exit']
+
 const deviceInfo = reactive({
   id: deviceId.value,
   roomId: null,
+  in: null,
 })
 
 const editingDeviceInfo = reactive({
   id: deviceId.value,
   roomId: null,
+  in: null,
+  direction: null,
 })
 
 const getRoomInfo = async () => {
   try {
     const response = await devicesApi.getDeviceById(deviceId.value)
     deviceInfo.roomId = response.data.roomId
+    deviceInfo.in = response.data.in
   } catch (err) {
     console.log(err)
     router.push({ path: '/devices', replace: true })
@@ -47,12 +54,16 @@ const isUpdating = ref(false)
 const isEnableUpdating = ref(false)
 
 const updateDeviceInfo = async () => {
-  if (!(editingDeviceInfo.roomId && deviceInfo.roomId !== editingDeviceInfo.roomId)) return
+  if (!editingDeviceInfo.direction) return
 
   try {
     isUpdating.value = true
-    const response = await devicesApi.updateDevice(deviceId.value, editingDeviceInfo)
+    const response = await devicesApi.updateDevice(deviceId.value, {
+      roomId: editingDeviceInfo.roomId,
+      in: editingDeviceInfo.direction === 'Entry' ? true : false,
+    })
     deviceInfo.roomId = response.data.roomId
+    deviceInfo.in = response.data.in
 
     isEnableUpdating.value = false
   } catch (err) {
@@ -64,6 +75,8 @@ const updateDeviceInfo = async () => {
 
 const enableUpdate = () => {
   editingDeviceInfo.roomId = deviceInfo.roomId
+  editingDeviceInfo.in = deviceInfo.in
+  editingDeviceInfo.direction = editingDeviceInfo.in ? 'Entry' : 'Exit'
   isEnableUpdating.value = true
 }
 
@@ -92,13 +105,23 @@ onMounted(async () => {
       <div class="max-w-[200px] p-4">
         <div v-if="isEnableUpdating" class="space-y-4 w-max">
           <div>
-            <label htmlFor="roomId" class="block font-semibold text-gray-700 mb-1"> Room ID </label>
+            <label for="roomId" class="block font-semibold text-gray-700 mb-1"> Room ID </label>
             <input
               type="text"
               id="roomId"
               class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-150 ease-in-out"
               v-model="editingDeviceInfo.roomId"
               :disabled="isUpdating"
+            />
+
+            <label for="in" class="block font-semibold text-gray-700 mb-1 mt-2">Direction:</label>
+            <Select
+              id="in"
+              v-model="editingDeviceInfo.direction"
+              :options="directions"
+              placeholder="Entry/Exit"
+              :disabled="isUpdating"
+              class="w-full"
             />
           </div>
           <div class="flex flex-col sm:flex-row justify-end gap-3 pt-2">
@@ -124,6 +147,11 @@ onMounted(async () => {
             <RouterLink :to="`/rooms/${deviceInfo.roomId}`">
               <p class="text-sm text-gray-900">{{ deviceInfo.roomId ?? 'N/A' }}</p>
             </RouterLink>
+
+            <p class="text-md font-semibold text-gray-700">Direction:</p>
+            <p :class="`text-sm font-medium ${deviceInfo.in ? 'text-green-600' : 'text-red-600'}`">
+              {{ deviceInfo.in ? 'Entry' : 'Exit' }}
+            </p>
           </div>
           <div class="pt-2">
             <button

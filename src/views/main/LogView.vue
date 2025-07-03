@@ -31,6 +31,7 @@ const logInfo = reactive({
   memberId: null,
   deviceId: null,
   imageUrl: null,
+  in: null,
 })
 
 const logImage = reactive({
@@ -46,6 +47,7 @@ const getLogInfo = async () => {
     logInfo.memberId = response.data.civilianId
     logInfo.deviceId = response.data.deviceId
     logInfo.imageUrl = response.data.imageUrl
+    logInfo.in = response.data.in
 
     if (logInfo.imageUrl) {
       try {
@@ -92,6 +94,11 @@ onMounted(async () => {
               <RouterLink :to="`/members/${logInfo.memberId}`">
                 <p class="text-sm text-gray-900 hover:text-indigo-600">{{ logInfo.memberId }}</p>
               </RouterLink>
+
+              <p class="text-md font-semibold text-gray-700">Direction:</p>
+              <p :class="`text-sm font-medium ${logInfo.in ? 'text-green-600' : 'text-red-600'}`">
+                {{ logInfo.in ? 'Entry' : 'Exit' }}
+              </p>
 
               <p class="text-md font-semibold text-gray-700">Device ID:</p>
               <RouterLink :to="`/devices/${logInfo.deviceId}`">

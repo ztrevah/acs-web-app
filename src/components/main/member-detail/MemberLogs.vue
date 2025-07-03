@@ -2,7 +2,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
-import { ProgressSpinner } from 'primevue'
+import { ProgressSpinner, Select } from 'primevue'
 
 import logsApi from '@/api/logs'
 import { convertUtcIsoDateTimeToLocal } from '@/utils/datetimeutils'
@@ -18,7 +18,10 @@ const isFetching = ref(false)
 const filter = reactive({
   fromTime: null,
   toTime: null,
+  direction: null,
 })
+
+const directions = ['Entry', 'Exit']
 
 const limit = 20
 
@@ -53,6 +56,7 @@ const fetchLogs = async () => {
       limit,
       fromTime: filter.fromTime ? new Date(filter.fromTime).toISOString() : null,
       toTime: filter.toTime ? new Date(filter.toTime).toISOString() : null,
+      isIn: filter.direction === 'Entry' ? true : filter.direction === null ? null : false,
     })
 
     const { cursorId: nextId, count, data } = response.data
@@ -78,6 +82,7 @@ const searchLogs = async () => {
 const clearFilter = () => {
   filter.fromTime = null
   filter.toTime = null
+  filter.direction = null
 }
 
 onMounted(async () => {
@@ -104,6 +109,16 @@ onMounted(async () => {
           id="toTime"
           className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out cursor-pointer text-sm"
           v-model="filter.toTime"
+        />
+      </div>
+      <div class="space-y-2 min-w-[200px] max-w-[400px]">
+        <label for="direction">Direction:</label>
+        <Select
+          id="direction"
+          v-model="filter.direction"
+          :options="directions"
+          placeholder="Entry/Exit"
+          class="w-full"
         />
       </div>
       <div class="flex items-center w-max gap-x-2">
@@ -157,6 +172,11 @@ onMounted(async () => {
                 >
                   Room ID
                 </th>
+                <th
+                  class="px-6 py-3 text-left text-sm font-medium text-gray-500 uppercase tracking-wider"
+                >
+                  Direction
+                </th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
@@ -170,6 +190,11 @@ onMounted(async () => {
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {{ log.roomId }}
+                </td>
+                <td
+                  :class="`px-6 py-4 whitespace-nowrap text-sm font-medium ${log.in ? 'text-green-600' : 'text-red-600'}`"
+                >
+                  {{ log.in ? 'Entry' : 'Exit' }}
                 </td>
               </tr>
             </tbody>
