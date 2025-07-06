@@ -20,20 +20,24 @@ const getRoomMembers = (roomId, params) => {
   return api.get(`/api/rooms/${roomId}/members`, { params })
 }
 
-const addRoomMember = (roomId, body, params) => {
-  return api.post(`/api/rooms/${roomId}/members`, body, { params })
-}
-
-const getRoomMember = (roomId, memberId, params) => {
+const getRoomMemberInfo = (roomId, memberId, params) => {
   return api.get(`/api/rooms/${roomId}/members/${memberId}`, { params })
 }
 
-const updateRoomMember = (roomId, memberId, body, params) => {
-  return api.put(`/api/rooms/${roomId}/members/${memberId}`, body, { params })
+const addRoomMemberRight = (roomId, memberId, body, params) => {
+  return api.post(`/api/rooms/${roomId}/members/${memberId}/rights`, body, { params })
 }
 
-const removeRoomMember = (roomId, memberId, params) => {
+const updateRoomMemberRight = (id, roomId, memberId, body, params) => {
+  return api.put(`/api/rooms/${roomId}/members/${memberId}/rights/${id}`, body, { params })
+}
+
+const removeAllRoomMemberRights = (roomId, memberId, params) => {
   return api.delete(`/api/rooms/${roomId}/members/${memberId}`, { params })
+}
+
+const removeRoomMemberRight = (id, roomId, memberId, params) => {
+  return api.delete(`/api/rooms/${roomId}/members/${memberId}/rights/${id}`, { params })
 }
 
 const getRoomDevices = (id, params) => {
@@ -50,10 +54,11 @@ export default {
   addRoom,
   updateRoom,
   getRoomMembers,
-  getRoomMember,
-  addRoomMember,
-  updateRoomMember,
-  removeRoomMember,
+  getRoomMemberInfo,
+  addRoomMemberRight,
+  updateRoomMemberRight,
+  removeRoomMemberRight,
+  removeAllRoomMemberRights,
   getRoomDevices,
   addRoomDevices,
 }

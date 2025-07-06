@@ -5,12 +5,8 @@ import { useRoute } from 'vue-router'
 import { Checkbox, Dialog, ProgressSpinner, Toast, useToast } from 'primevue'
 
 import roomsApi from '@/api/rooms'
-import {
-  AccessStatus,
-  getAccessStatus,
-  getAccessStatusTextColor,
-} from '@/utils/access-status-utils'
-import { convertUtcIsoDateTimeToLocal } from '@/utils/datetimeutils'
+import { getAccessStatusTextColor } from '@/utils/access-status-utils'
+import RoomMemberModal from './RoomMemberModal.vue'
 
 const route = useRoute()
 const toast = useToast()
@@ -83,14 +79,14 @@ const searchMembers = async () => {
 }
 
 const isAddModalOpen = ref(false)
-const addedMember = reactive({
+const addedRoomMember = reactive({
   memberId: null,
   startTime: null,
   endTime: null,
   disabledStartTime: null,
   disabledEndTime: null,
 })
-const isAddingMember = ref(false)
+const isAddingRoomMember = ref(false)
 const errorMessage = ref('')
 
 const onOpenAddModal = () => {
@@ -99,6 +95,11 @@ const onOpenAddModal = () => {
 
 const onCloseAddModal = () => {
   isAddModalOpen.value = false
+  addedRoomMember.memberId = null
+  addedRoomMember.startTime = null
+  addedRoomMember.endTime = null
+  addedRoomMember.disabledStartTime = null
+  addedRoomMember.disabledEndTime = null
   errorMessage.value = ''
 }
 
@@ -107,224 +108,91 @@ const updateAddModalVisible = (visible) => {
   else onCloseAddModal()
 }
 
-const addMember = async () => {
-  if (!addedMember.memberId || !addedMember.startTime || !addedMember.endTime) {
+const addRoomMember = async () => {
+  if (!addedRoomMember.memberId || !addedRoomMember.startTime || !addedRoomMember.endTime) {
     errorMessage.value = 'Fill out all required fields'
     return
   }
 
   try {
-    isAddingMember.value = true
+    isAddingRoomMember.value = true
 
-    const isMemberExisted = true
-    try {
-      await roomsApi.getRoomMember(roomId, addedMember.memberId)
-    } catch (err) {
-      isMemberExisted = false
-    }
-
-    if (isMemberExisted) {
-      onOpenConfirmOverrideModal()
-    } else {
-      addedMember.startTime = addedMember.startTime
-        ? new Date(addedMember.startTime).toISOString()
-        : null
-      addedMember.endTime = addedMember.endTime ? new Date(addedMember.endTime).toISOString() : null
-      addedMember.disabledStartTime = addedMember.disabledStartTime
-        ? new Date(addedMember.disabledStartTime).toISOString()
-        : null
-      addedMember.disabledEndTime = addedMember.disabledEndTime
-        ? new Date(addedMember.disabledEndTime).toISOString()
-        : null
-
-      const response = await roomsApi.addRoomMember(roomId, addedMember)
-      toast.add({
-        severity: 'success',
-        summary: 'New member added!',
-        group: 'arm',
-        life: 3000,
-      })
-      onCloseAddModal()
-      await searchMembers()
-    }
-  } catch (err) {
-    errorMessage.value = err.response?.data?.error?.message ?? 'Error'
-    console.log(err)
-  } finally {
-    isAddingMember.value = false
-  }
-}
-
-const isConfirmOverrideModalOpen = ref(false)
-
-const onOpenConfirmOverrideModal = () => {
-  isConfirmOverrideModalOpen.value = true
-}
-
-const onCloseConfirmOverrideModal = () => {
-  isConfirmOverrideModalOpen.value = false
-}
-
-const updateConfirmOverrideModalVisible = (visible) => {
-  if (!visible) onCloseConfirmOverrideModal()
-}
-
-const overrideMemberRight = async () => {
-  try {
-    isAddingMember.value = true
-
-    const response = await roomsApi.updateRoomMember(roomId, addedMember.memberId, {
-      memberId: addedMember.memberId,
-      startTime: addedMember.startTime ? new Date(addedMember.startTime).toISOString() : null,
-      endTime: addedMember.endTime ? new Date(addedMember.endTime).toISOString() : null,
-      disabledStartTime: addedMember.disabledStartTime
-        ? new Date(addedMember.disabledStartTime).toISOString()
+    const response = await roomsApi.addRoomMemberRight(roomId, addedRoomMember.memberId, {
+      memberId: addedRoomMember.memberId,
+      startTime: addedRoomMember.startTime
+        ? new Date(addedRoomMember.startTime).toISOString()
         : null,
-      disabledEndTime: addedMember.disabledEndTime
-        ? new Date(addedMember.disabledEndTime).toISOString()
+      endTime: addedRoomMember.endTime ? new Date(addedRoomMember.endTime).toISOString() : null,
+      disabledStartTime: addedRoomMember.disabledStartTime
+        ? new Date(addedRoomMember.disabledStartTime).toISOString()
+        : null,
+      disabledEndTime: addedRoomMember.disabledEndTime
+        ? new Date(addedRoomMember.disabledEndTime).toISOString()
         : null,
     })
-    onCloseConfirmOverrideModal()
+    toast.add({
+      severity: 'success',
+      summary: 'New room member added!',
+      group: 'arm',
+      life: 3000,
+    })
     onCloseAddModal()
     await searchMembers()
   } catch (err) {
     errorMessage.value = err.response?.data?.error?.message ?? 'Error'
     console.log(err)
   } finally {
-    isAddingMember.value = false
+    isAddingRoomMember.value = false
   }
 }
 
-const isUpdateModalOpen = ref(false)
-const updateEnabled = ref(false)
-const updatedMember = reactive({
-  memberId: null,
-  startTime: null,
-  endTime: null,
-  disabledStartTime: null,
-  disabledEndTime: null,
-})
-const initialMemberInfo = ref(null)
-const isUpdatingMember = ref(false)
-
-const onOpenUpdateModal = async (memberId) => {
-  try {
-    const response = await roomsApi.getRoomMember(roomId, memberId)
-    initialMemberInfo.value = response.data
-
-    updatedMember.memberId = initialMemberInfo.value.memberId
-    updatedMember.startTime = convertUtcIsoDateTimeToLocal(initialMemberInfo.value.startTime)
-    updatedMember.endTime = convertUtcIsoDateTimeToLocal(initialMemberInfo.value.endTime)
-    updatedMember.disabledStartTime = convertUtcIsoDateTimeToLocal(
-      initialMemberInfo.value.disabledStartTime,
-    )
-    updatedMember.disabledEndTime = convertUtcIsoDateTimeToLocal(
-      initialMemberInfo.value.disabledEndTime,
-    )
-    isUpdateModalOpen.value = true
-  } catch (err) {
-    console.log(err)
-  }
+const isRoomMemberInfoModalOpen = ref(false)
+const reviewedMember = ref(null)
+const onOpenRoomMemberModal = (member) => {
+  reviewedMember.value = member
+  isRoomMemberInfoModalOpen.value = true
 }
 
-const onCloseUpdateModal = () => {
-  isUpdateModalOpen.value = false
-  updateEnabled.value = false
-  errorMessage.value = ''
-}
-
-const updateUpdateModalVisible = (visible) => {
-  if (visible) onOpenUpdateModal()
-  else onCloseUpdateModal()
-}
-
-const enableUpdateMember = () => {
-  updateEnabled.value = true
-  errorMessage.value = ''
-}
-
-const cancelUpdateMember = () => {
-  updateEnabled.value = false
-  errorMessage.value = ''
-
-  updatedMember.memberId = initialMemberInfo.value.memberId
-  updatedMember.startTime = convertUtcIsoDateTimeToLocal(initialMemberInfo.value.startTime)
-  updatedMember.endTime = convertUtcIsoDateTimeToLocal(initialMemberInfo.value.endTime)
-  updatedMember.disabledStartTime = convertUtcIsoDateTimeToLocal(
-    initialMemberInfo.value.disabledStartTime,
-  )
-  updatedMember.disabledEndTime = convertUtcIsoDateTimeToLocal(
-    initialMemberInfo.value.disabledEndTime,
-  )
-}
-
-const updateMember = async () => {
-  if (!updatedMember.memberId || !updatedMember.startTime || !updatedMember.endTime) {
-    errorMessage.value = 'Fill out all required fields'
-    return
-  }
-
-  console.log(updatedMember)
-
-  try {
-    isUpdatingMember.value = true
-
-    const response = await roomsApi.updateRoomMember(roomId, updatedMember.memberId, {
-      memberId: updatedMember.memberId,
-      startTime: updatedMember.startTime ? new Date(updatedMember.startTime).toISOString() : null,
-      endTime: updatedMember.endTime ? new Date(updatedMember.endTime).toISOString() : null,
-      disabledStartTime: updatedMember.disabledStartTime
-        ? new Date(updatedMember.disabledStartTime).toISOString()
-        : null,
-      disabledEndTime: updatedMember.disabledEndTime
-        ? new Date(updatedMember.disabledEndTime).toISOString()
-        : null,
-    })
-    onCloseUpdateModal()
-    updateEnabled.value = false
+const onCloseRoomMemberModal = async (newInfo) => {
+  isRoomMemberInfoModalOpen.value = false
+  if (!newInfo) {
     await searchMembers()
-  } catch (err) {
-    errorMessage.value = err.response?.data?.error?.message ?? 'Error'
-    console.log(err)
-  } finally {
-    isUpdatingMember.value = false
   }
+  reviewedMember.value.status = newInfo.status
 }
 
-const isRemoveModalOpen = ref(false)
-const removedMember = reactive({
+const isDeleteMemberModalOpen = ref(false)
+const deletedMember = reactive({
   memberId: null,
 })
-const isRemovingMember = ref(false)
+const isDeletingMember = ref(false)
 
-const onOpenRemoveModal = (memberId) => {
-  removedMember.memberId = memberId
-  isRemoveModalOpen.value = true
+const onClickDeleteMember = (memberId) => {
+  deletedMember.memberId = memberId
+  isDeleteMemberModalOpen.value = true
 }
 
-const onCloseRemoveModal = () => {
-  isRemoveModalOpen.value = false
+const onCloseDeleteModal = () => {
+  isDeleteMemberModalOpen.value = false
   errorMessage.value = ''
 }
 
 const updateRemoveModalVisible = (visible) => {
-  if (!visible) onCloseRemoveModal()
+  if (!visible) onCloseDeleteModal()
 }
 
 const removeMember = async () => {
-  if (!removedMember.memberId) return
+  if (!deletedMember.memberId) return
   try {
-    isRemovingMember.value = true
-    const response = await roomsApi.removeRoomMember(roomId, removedMember.memberId)
-    onCloseRemoveModal()
-    onCloseUpdateModal()
+    isDeletingMember.value = true
+    const response = await roomsApi.removeAllRoomMemberRights(roomId, deletedMember.memberId)
+    onCloseDeleteModal()
     await searchMembers()
   } catch (err) {
-    onCloseRemoveModal()
-    errorMessage.value = err.response?.data?.error?.message ?? 'Error'
+    onCloseDeleteModal()
     console.log(err)
   } finally {
-    isRemovingMember.value = false
+    isDeletingMember.value = false
   }
 }
 
@@ -428,25 +296,33 @@ onMounted(async () => {
                 <td
                   class="px-6 py-4 whitespace-nowrap font-medium text-sm text-gray-900 cursor-pointer"
                 >
-                  <RouterLink :to="`/members/${roomMember.member.id}`">{{
-                    roomMember.member.id
-                  }}</RouterLink>
+                  <RouterLink :to="`/members/${roomMember.id}`">{{ roomMember.id }}</RouterLink>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ roomMember.member.name }}
+                  {{ roomMember.name }}
                 </td>
                 <td
-                  :class="`px-6 py-4 whitespace-nowrap text-sm font-semibold ${getAccessStatusTextColor(getAccessStatus(roomMember))}`"
+                  :class="`px-6 py-4 whitespace-nowrap text-sm font-semibold ${getAccessStatusTextColor(roomMember.status)}`"
                 >
-                  {{ getAccessStatus(roomMember) }}
+                  {{ roomMember.status }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <i
-                    class="pi pi-pen-to-square"
+                    class="pi pi-info-circle mr-2"
+                    style="font-size: 16px; color: gray"
+                    @click="
+                      () => {
+                        onOpenRoomMemberModal(roomMember)
+                      }
+                    "
+                  ></i>
+
+                  <i
+                    class="pi pi-trash"
                     style="font-size: 16px; color: red"
                     @click="
                       () => {
-                        onOpenUpdateModal(roomMember.member.id)
+                        onClickDeleteMember(roomMember.id)
                       }
                     "
                   ></i>
@@ -483,11 +359,11 @@ onMounted(async () => {
   >
     <template #header>
       <div class="inline-flex items-center justify-center gap-2">
-        <span class="font-bold whitespace-nowrap text-lg">Add new member</span>
+        <span class="font-bold whitespace-nowrap text-lg">Add new room member</span>
       </div>
     </template>
 
-    <form @submit.prevent="addMember">
+    <form @submit.prevent="addRoomMember">
       <div class="flex flex-col gap-2 mb-4">
         <label for="id" class="text-md font-medium text-gray-500">Member ID</label>
         <input
@@ -497,7 +373,7 @@ onMounted(async () => {
           required
           autocomplete="off"
           placeholder="Member ID"
-          v-model="addedMember.memberId"
+          v-model="addedRoomMember.memberId"
         />
       </div>
 
@@ -507,7 +383,7 @@ onMounted(async () => {
           type="datetime-local"
           id="startTime"
           className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out cursor-pointer text-sm"
-          v-model="addedMember.startTime"
+          v-model="addedRoomMember.startTime"
           required
         />
       </div>
@@ -518,7 +394,7 @@ onMounted(async () => {
           type="datetime-local"
           id="endTime"
           className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out cursor-pointer text-sm"
-          v-model="addedMember.endTime"
+          v-model="addedRoomMember.endTime"
           required
         />
       </div>
@@ -531,7 +407,7 @@ onMounted(async () => {
           type="datetime-local"
           id="disabledStartTime"
           className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out cursor-pointer text-sm"
-          v-model="addedMember.disabledStartTime"
+          v-model="addedRoomMember.disabledStartTime"
         />
       </div>
 
@@ -541,7 +417,7 @@ onMounted(async () => {
           type="datetime-local"
           id="disabledEndTime"
           className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out cursor-pointer text-sm"
-          v-model="addedMember.disabledEndTime"
+          v-model="addedRoomMember.disabledEndTime"
         />
       </div>
 
@@ -551,179 +427,33 @@ onMounted(async () => {
       <button
         type="button"
         class="w-full p-2 border border-transparent rounded-md text-xs font-medium text-white bg-indigo-500 hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        @click="addMember"
-        :disabled="isAddingMember"
+        @click="addRoomMember"
+        :disabled="isAddingRoomMember"
       >
         Add
       </button>
     </form>
   </Dialog>
-
-  <Dialog
-    :visible="isConfirmOverrideModalOpen"
-    modal
-    header="Override access right"
-    class="w-full max-w-[350px]"
-    v-on:update:visible="updateConfirmOverrideModalVisible"
-  >
-    <template #header>
-      <div class="inline-flex items-center justify-center gap-2">
-        <span class="font-bold whitespace-nowrap text-lg">Override access right</span>
-      </div>
-    </template>
-    <p class="text-gray-600 text-center mb-4">
-      The civilian <span class="font-semibold">{{ addedMember.memberId }}</span> is already a
-      member. Do you want to override his/her current access right?
-    </p>
-    <div class="flex items-center justify-between">
-      <button
-        type="button"
-        class="w-full sm:w-auto px-5 py-2 text-xs border border-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-75 transition duration-200 ease-in-out"
-        @click="onCloseConfirmOverrideModal"
-        :disabled="isAddingMember"
-      >
-        Cancel
-      </button>
-      <button
-        type="button"
-        class="w-full sm:w-auto px-5 py-2 text-xs bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75 transition duration-200 ease-in-out"
-        @click="overrideMemberRight"
-        :disabled="isAddingMember"
-      >
-        Confirm
-      </button>
-    </div>
-  </Dialog>
-
   <Toast position="top-right" group="arm" style="width: max-content">
     <template #message="slotProps">
       <div class="flex items-center gap-x-2 mr-2">
         <p class="font-medium text-sm">
-          Member {{ addedMember.memberId }} has been added to the room!
+          New access right of member {{ addedRoomMember.memberId }} created!
         </p>
       </div>
     </template>
   </Toast>
 
-  <Dialog
-    :visible="isUpdateModalOpen"
-    modal
-    header="Edit Profile"
-    class="w-full max-w-[350px]"
-    v-on:update:visible="updateUpdateModalVisible"
-  >
-    <template #header>
-      <div class="inline-flex items-center justify-center gap-2">
-        <span class="font-bold whitespace-nowrap text-lg">Room Member Info</span>
-      </div>
-    </template>
-
-    <form @submit.prevent="updateMember">
-      <div class="flex flex-col gap-2 mb-4">
-        <label for="id" class="text-md font-medium text-gray-500">Member ID</label>
-        <input
-          id="id"
-          type="text"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          required
-          autocomplete="off"
-          disabled
-          v-model="updatedMember.memberId"
-        />
-      </div>
-
-      <div class="flex flex-col gap-2 mb-4">
-        <label for="startTime" class="text-md font-medium text-gray-500">Access Start Time:</label>
-        <input
-          type="datetime-local"
-          id="startTime"
-          className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out cursor-pointer text-sm"
-          v-model="updatedMember.startTime"
-          required
-          :readonly="!updateEnabled"
-        />
-      </div>
-
-      <div class="flex flex-col gap-2 mb-4">
-        <label for="endTime" class="text-md font-medium text-gray-500">Access End Time:</label>
-        <input
-          type="datetime-local"
-          id="endTime"
-          className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out cursor-pointer text-sm"
-          v-model="updatedMember.endTime"
-          required
-          :readonly="!updateEnabled"
-        />
-      </div>
-
-      <div class="flex flex-col gap-2 mb-4">
-        <label for="disabledStartTime" class="text-md font-medium text-gray-500"
-          >Disabled From:</label
-        >
-        <input
-          type="datetime-local"
-          id="disabledStartTime"
-          className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out cursor-pointer text-sm"
-          v-model="updatedMember.disabledStartTime"
-          :readonly="!updateEnabled"
-        />
-      </div>
-
-      <div class="flex flex-col gap-2 mb-4">
-        <label for="disabledEndTime" class="text-md font-medium text-gray-500">Disabled To:</label>
-        <input
-          type="datetime-local"
-          id="disabledEndTime"
-          className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out cursor-pointer text-sm"
-          v-model="updatedMember.disabledEndTime"
-          :readonly="!updateEnabled"
-        />
-      </div>
-
-      <p v-if="errorMessage.length > 0" class="text-red-500 text-xs font-semibold my-1 text-center">
-        {{ errorMessage }}
-      </p>
-      <div v-if="!updateEnabled" class="flex gap-2 items-center justify-between">
-        <button
-          type="button"
-          class="w-full p-2 border border-transparent rounded-md text-xs font-medium text-white bg-indigo-500 hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          @click="enableUpdateMember"
-        >
-          Edit
-        </button>
-
-        <button
-          type="button"
-          class="w-full p-2 border border-transparent rounded-md text-xs font-medium text-white bg-red-500 hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          @click="() => onOpenRemoveModal(updatedMember.memberId)"
-        >
-          Remove
-        </button>
-      </div>
-
-      <div v-else class="flex gap-2 items-center justify-between">
-        <button
-          type="button"
-          class="w-full p-2 border border-gray-300 rounded-md text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          @click="cancelUpdateMember"
-          :disabled="isUpdatingMember"
-        >
-          Cancel
-        </button>
-        <button
-          type="button"
-          class="w-full p-2 border border-transparent rounded-md text-xs font-medium text-white bg-indigo-500 hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          @click="updateMember"
-          :disabled="isUpdatingMember"
-        >
-          Save changes
-        </button>
-      </div>
-    </form>
-  </Dialog>
+  <RoomMemberModal
+    v-if="reviewedMember"
+    :roomId="roomId"
+    :memberId="reviewedMember.id"
+    :isOpen="isRoomMemberInfoModalOpen"
+    @handleClose="onCloseRoomMemberModal"
+  />
 
   <Dialog
-    :visible="isRemoveModalOpen"
+    :visible="isDeleteMemberModalOpen"
     modal
     header="Remove Access Right"
     class="w-full max-w-[300px]"
@@ -735,15 +465,15 @@ onMounted(async () => {
       </div>
     </template>
     <p class="text-gray-600 text-center mb-4">
-      Are you sure you want to remove the access right of member
-      <span class="font-semibold">{{ removedMember.memberId }}</span
+      Are you sure you want to remove all access rights of member
+      <span class="font-semibold">{{ deletedMember.memberId }}</span
       >?
     </p>
     <div class="flex items-center justify-between">
       <button
         type="button"
         class="w-full sm:w-auto px-5 py-2 text-xs border border-gray-300 text-gray-700 font-semibold rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-75 transition duration-200 ease-in-out"
-        @click="onCloseRemoveModal"
+        @click="onCloseDeleteModal"
       >
         Cancel
       </button>
