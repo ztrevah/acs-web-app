@@ -49,7 +49,7 @@ const newDevice = reactive({
 const directions = ['Entry', 'Exit']
 
 const addNewDevice = async () => {
-  if (!newDevice.name || !newDevice.direction) return
+  if (!newDevice.id || !newDevice.direction) return
   try {
     const response = await devicesApi.addDevice({
       id: newDevice.id,
@@ -186,7 +186,7 @@ onMounted(async () => {
         >
           <template #header>
             <div class="inline-flex items-center justify-center gap-2">
-              <span class="font-bold whitespace-nowrap text-lg">Add a new room</span>
+              <span class="font-bold whitespace-nowrap text-lg">Add a new device</span>
             </div>
           </template>
 
